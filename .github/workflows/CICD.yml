@@ -1,8 +1,12 @@
 name: Deploy to PythonAnywhere (recursive upload)
 
+# ⚠️ DÉPRÉCIÉ — Ne plus utiliser pour un déploiement réel.
+# L'upload via l'API Files de PythonAnywhere s'est révélé non fiable (fichiers
+# déposés vides, corruption des fichiers binaires comme le logo/favicon).
+# Le déploiement se fait désormais par git : voir deploy.sh et le README.
+# Ce workflow est conservé en déclenchement MANUEL uniquement (workflow_dispatch)
+# pour ne pas re-casser le site à chaque push.
 on:
-  push:
-    branches: ["main"]
   workflow_dispatch:
 
 jobs:

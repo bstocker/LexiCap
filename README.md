@@ -73,16 +73,42 @@ flask db migrate -m "message"
 flask db upgrade
 ```
 
-## Déploiement
+## Déploiement (PythonAnywhere, par git)
 
-Le dépôt contient un workflow GitHub Actions
-(`.github/workflows/CICD.yml`) qui déploie sur **PythonAnywhere** à chaque push
-sur `main`. Il nécessite les secrets de dépôt : `PA_USERNAME`, `PA_TOKEN`,
-`PA_TARGET_DIR`, `PA_WEBAPP_DOMAIN` (et `PA_HOST` si compte EU).
+Le déploiement se fait par **git pull** sur PythonAnywhere — fiable pour le code
+comme pour les fichiers binaires (logo, favicon).
 
-Sur PythonAnywhere, configurer le fichier WSGI de la webapp pour importer
-`application` depuis `wsgi.py` (voir le commentaire en tête de `wsgi.py`), définir
-`SECRET_KEY` dans les variables d'environnement et exécuter `flask init-db`.
+> L'ancien workflow GitHub Actions (`.github/workflows/CICD.yml`, upload via
+> l'API Files) est **déprécié** : il déposait des fichiers vides et corrompait
+> les binaires. Il est conservé en déclenchement manuel uniquement.
+
+**Première installation** (une seule fois, dans une console Bash PythonAnywhere) :
+
+```bash
+cd ~/mysite
+git init -q
+git remote add origin https://github.com/bstocker/LexiCap.git
+git fetch origin main
+git reset --hard origin/main
+python3.13 -m pip install --user -r requirements.txt
+```
+
+Puis, onglet **Web** de PythonAnywhere :
+- *WSGI configuration file* → la ligne d'import doit être `from wsgi import app as application` ;
+- cliquer sur **Reload**.
+
+Aucune commande `flask init-db` n'est nécessaire : les tables et la clé secrète
+sont créées automatiquement au premier chargement, et le premier compte
+administrateur se crée via l'assistant web (`/setup`).
+
+**Mises à jour suivantes** : après un `git push` sur ce dépôt, lancer côté
+PythonAnywhere :
+
+```bash
+bash ~/mysite/deploy.sh
+```
+
+(le script fait `git pull`, installe les nouvelles dépendances et recharge la web app)
 
 ## Structure du projet
 
