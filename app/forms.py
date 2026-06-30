@@ -7,7 +7,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
 from wtforms import (
     BooleanField, DateField, FloatField, IntegerField, PasswordField,
-    SelectField, StringField, SubmitField, TextAreaField,
+    SelectField, StringField, SubmitField, TextAreaField, TimeField,
 )
 from wtforms.validators import (
     DataRequired, Email, EqualTo, Length, NumberRange, Optional, URL,
@@ -236,6 +236,34 @@ class DocumentForm(FlaskForm):
         if not self.file.data and not self.url.data and not getattr(self, "_editing", False):
             msg = "Fournissez un fichier ou une URL."
             self.file.errors.append(msg)
+            return False
+        return True
+
+
+# ---------------------------------------------------------------------------
+# Emploi du temps
+# ---------------------------------------------------------------------------
+class ScheduleSlotForm(FlaskForm):
+    day_of_week = SelectField(
+        "Jour", coerce=int, choices=[(i, j) for i, j in enumerate(m.WEEKDAYS)]
+    )
+    start_time = TimeField(
+        "Début", format=["%H:%M", "%H:%M:%S"], render_kw={"type": "time"}
+    )
+    end_time = TimeField(
+        "Fin", format=["%H:%M", "%H:%M:%S"], render_kw={"type": "time"}
+    )
+    subject_id = SelectField("Matière", coerce=int, validators=[Optional()])
+    slot_type = SelectField("Type", choices=_choices(m.SLOT_TYPES))
+    room = StringField("Salle", validators=[Optional(), Length(max=80)])
+    note = StringField("Note", validators=[Optional(), Length(max=200)])
+    submit = SubmitField("Enregistrer")
+
+    def validate(self, extra_validators=None):
+        if not super().validate(extra_validators):
+            return False
+        if self.start_time.data and self.end_time.data and self.end_time.data <= self.start_time.data:
+            self.end_time.errors.append("L'heure de fin doit être après le début.")
             return False
         return True
 

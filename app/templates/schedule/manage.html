@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import subject_badge %}
+{% block title %}Gérer l'emploi du temps — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h4 mb-0">Créneaux récurrents</h1>
+  <div>
+    <a href="{{ url_for('schedule.week') }}" class="btn btn-sm btn-outline-secondary">← Vue semaine</a>
+    <a href="{{ url_for('schedule.new') }}" class="btn btn-sm btn-primary">+ Nouveau créneau</a>
+  </div>
+</div>
+<div class="card shadow-sm">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Jour</th><th>Horaire</th><th>Matière</th><th>Type</th><th>Salle</th><th></th></tr></thead>
+    <tbody>
+      {% for s in slots %}
+      <tr>
+        <td>{{ weekdays[s.day_of_week] }}</td>
+        <td>{{ s.start_time.strftime('%H:%M') }}–{{ s.end_time.strftime('%H:%M') }}</td>
+        <td>{{ subject_badge(s.subject) }}</td>
+        <td><span class="badge" style="background:{{ s.color }}">{{ s.slot_type }}</span></td>
+        <td><small>{{ s.room or '—' }}</small></td>
+        <td class="text-end">
+          <a href="{{ url_for('schedule.edit', slot_id=s.id) }}" class="btn btn-sm btn-outline-secondary">Modifier</a>
+          <form method="post" action="{{ url_for('schedule.delete', slot_id=s.id) }}" class="d-inline"
+                onsubmit="return confirm('Supprimer ce créneau ?');">
+            <button class="btn btn-sm btn-outline-danger">Suppr.</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-muted text-center py-4">Aucun créneau. Ajoutez les cours et TD réguliers de la semaine.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

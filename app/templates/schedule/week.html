@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Emploi du temps — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="h4 mb-0">Emploi du temps</h1>
+  <div class="btn-group">
+    <a href="{{ url_for('schedule.week', date=prev_date) }}" class="btn btn-sm btn-outline-secondary">← Sem. préc.</a>
+    <a href="{{ url_for('schedule.week') }}" class="btn btn-sm btn-outline-secondary">Cette semaine</a>
+    <a href="{{ url_for('schedule.week', date=next_date) }}" class="btn btn-sm btn-outline-secondary">Sem. suiv. →</a>
+  </div>
+  <a href="{{ url_for('schedule.manage') }}" class="btn btn-sm btn-primary">Gérer les créneaux</a>
+</div>
+
+<div class="mb-2">
+  <span class="badge bg-info text-dark">TD</span>
+  <span class="badge bg-success">Évaluation</span>
+  <span class="badge bg-warning text-dark">Tâche</span>
+  <span class="text-muted small ms-2">Semaine du {{ monday.strftime('%d/%m/%Y') }}</span>
+</div>
+
+<div class="card shadow-sm"><div class="card-body p-2" style="overflow-x:auto">
+  <div style="display:flex; min-width:760px">
+    <!-- Gouttière des heures -->
+    <div style="width:46px; flex:none; padding-top:54px; position:relative">
+      <div style="position:relative; height:{{ grid_height }}px">
+        {% for h in hours %}
+        <div style="position:absolute; top:{{ (h - day_start_h) * 60 * px_per_min }}px; right:4px; transform:translateY(-50%); font-size:.72rem; color:#9ca3af">{{ '%02d'|format(h) }}h</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Colonnes des jours -->
+    {% for day in week_days %}
+    <div style="flex:1 1 0; min-width:110px; border-left:1px solid #e5e7eb">
+      <!-- En-tête du jour -->
+      <div class="text-center small fw-bold py-1 {{ 'bg-primary text-white' if day.is_today else 'bg-light' }}"
+           style="border-radius:4px">{{ day.label }}</div>
+      <!-- Événements datés (TD, évals, tâches) -->
+      <div style="min-height:30px; padding:2px 3px">
+        {% for e in day.events %}
+        <div class="small text-truncate badge w-100 text-start mb-1
+          {%- if e.kind == 'td' %} bg-info text-dark{% elif e.kind == 'eval' %} bg-success{% else %} bg-warning text-dark{% endif %}"
+          title="{{ e.label }}">{{ e.label }}</div>
+        {% endfor %}
+      </div>
+      <!-- Grille horaire -->
+      <div style="position:relative; height:{{ grid_height }}px;
+                  background:repeating-linear-gradient(#ffffff, #ffffff {{ (60*px_per_min)-1 }}px, #eef0f4 {{ (60*px_per_min)-1 }}px, #eef0f4 {{ 60*px_per_min }}px)">
+        {% for s in day.slots %}
+        <div style="position:absolute; top:{{ s.top }}px; height:{{ s.height }}px; left:2px; right:2px;
+                    background:{{ s.color }}1a; border-left:3px solid {{ s.color }}; border-radius:4px;
+                    padding:2px 4px; overflow:hidden" title="{{ s.label }} ({{ s.sub }})">
+          <div class="small fw-semibold text-truncate" style="color:{{ s.color }}">{{ s.label }}</div>
+          <div class="text-truncate" style="font-size:.7rem; color:#6b7280">{{ s.sub }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div></div>
+
+<p class="text-muted small mt-3">
+  Les créneaux gris/colorés sont votre emploi du temps récurrent. Les pastilles en haut de chaque jour
+  sont les TD, évaluations et tâches qui tombent cette semaine précise.
+</p>
+{% endblock %}

@@ -55,6 +55,17 @@ DOC_TYPES = [
     "Méthodologie", "Administratif", "Autre",
 ]
 
+WEEKDAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"]
+SLOT_TYPES = ["CM", "TD", "Révision", "Travail perso", "Autre"]
+# Couleur de fond par type de créneau (cohérente avec le reste de l'app).
+SLOT_COLORS = {
+    "CM": "#1e3a8a",
+    "TD": "#0d9488",
+    "Révision": "#16a34a",
+    "Travail perso": "#6b7280",
+    "Autre": "#9ca3af",
+}
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -409,3 +420,39 @@ class Document(db.Model):
     @property
     def size_kb(self):
         return round((self.size_bytes or 0) / 1024, 1)
+
+
+# ---------------------------------------------------------------------------
+# Emploi du temps : créneaux hebdomadaires récurrents
+# ---------------------------------------------------------------------------
+class ScheduleSlot(db.Model):
+    __tablename__ = "schedule_slots"
+
+    id = db.Column(db.Integer, primary_key=True)
+    subject_id = db.Column(db.Integer, db.ForeignKey("subjects.id"))
+    day_of_week = db.Column(db.Integer, nullable=False)  # 0 = Lundi … 5 = Samedi
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    slot_type = db.Column(db.String(20), default="CM")
+    room = db.Column(db.String(80))
+    note = db.Column(db.String(200))
+
+    subject = db.relationship("Subject")
+
+    @property
+    def start_minutes(self):
+        return self.start_time.hour * 60 + self.start_time.minute
+
+    @property
+    def end_minutes(self):
+        return self.end_time.hour * 60 + self.end_time.minute
+
+    @property
+    def color(self):
+        return SLOT_COLORS.get(self.slot_type, "#9ca3af")
+
+    @property
+    def day_name(self):
+        if 0 <= self.day_of_week < len(WEEKDAYS):
+            return WEEKDAYS[self.day_of_week]
+        return "?"

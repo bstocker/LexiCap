@@ -30,8 +30,8 @@ def create_app(config_class=None):
     # Enregistrement des blueprints.
     from .blueprints import (
         auth, calendar, courses, dashboard, deploy, documents, evaluations,
-        exports, parent, pwa, questions, reviews, setup, subjects, tasks, td,
-        tutoring, worksheets, admin,
+        exports, parent, pwa, questions, reviews, schedule, setup, subjects,
+        tasks, td, tutoring, worksheets, admin,
     )
     app.register_blueprint(deploy.bp)
     app.register_blueprint(pwa.bp)
@@ -40,6 +40,7 @@ def create_app(config_class=None):
     app.register_blueprint(parent.bp)
     app.register_blueprint(documents.bp)
     app.register_blueprint(calendar.bp)
+    app.register_blueprint(schedule.bp)
     app.register_blueprint(exports.bp)
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(subjects.bp)
