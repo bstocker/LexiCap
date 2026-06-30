@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Suivi parent — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h4 mb-0">Suivi — vue d'ensemble</h1>
+  <div>
+    <a href="{{ url_for('exports.index') }}" class="btn btn-sm btn-outline-secondary">Export / sauvegarde</a>
+    <a href="{{ url_for('calendar.month') }}" class="btn btn-sm btn-outline-secondary">Calendrier</a>
+  </div>
+</div>
+
+<!-- Compteurs -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body">
+    <div class="h3 mb-0">{{ tasks_by_status.get('Terminée', 0) }}</div><small class="text-muted">tâches terminées</small>
+  </div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body">
+    <div class="h3 mb-0 {{ 'text-danger' if overdue }}">{{ overdue }}</div><small class="text-muted">tâches en retard</small>
+  </div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body">
+    <div class="h3 mb-0">{{ submitted }}</div><small class="text-muted">devoirs / évaluations passés</small>
+  </div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body">
+    <div class="h3 mb-0">{{ avg_grade if avg_grade is not none else '—' }}{% if avg_grade is not none %}<small>/20</small>{% endif %}</div>
+    <small class="text-muted">moyenne générale</small>
+  </div></div></div>
+</div>
+
+<!-- Engagement -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="row align-items-center">
+      <div class="col-md-4">
+        <h2 class="h6">Engagement de {{ student.first_name or 'l’étudiante' if student else 'l’étudiante' }}</h2>
+        {% if last_login %}
+          <p class="mb-1">Dernière connexion :
+            <strong>{{ last_login.strftime('%d/%m/%Y à %H:%M') }}</strong></p>
+          <p class="mb-0">
+            {% if days_since_login == 0 %}<span class="badge bg-success">aujourd'hui</span>
+            {% elif days_since_login <= 3 %}<span class="badge bg-success">il y a {{ days_since_login }} j</span>
+            {% elif days_since_login <= 7 %}<span class="badge bg-warning text-dark">il y a {{ days_since_login }} j</span>
+            {% else %}<span class="badge bg-danger">il y a {{ days_since_login }} j</span>{% endif %}
+            · {{ logins_this_week }} connexion(s) cette semaine
+          </p>
+        {% else %}
+          <p class="text-muted mb-0">Aucune connexion enregistrée pour le moment.</p>
+        {% endif %}
+      </div>
+      <div class="col-md-8"><canvas id="loginsChart" height="90"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- Graphiques -->
+<div class="row g-4">
+  <div class="col-md-6"><div class="card shadow-sm"><div class="card-body">
+    <h2 class="h6">Travail à faire vs réalisé</h2>
+    <canvas id="tasksChart" height="200"></canvas>
+  </div></div></div>
+
+  <div class="col-md-6"><div class="card shadow-sm"><div class="card-body">
+    <h2 class="h6">Tâches terminées par semaine</h2>
+    <canvas id="doneChart" height="200"></canvas>
+  </div></div></div>
+
+  <div class="col-md-6"><div class="card shadow-sm"><div class="card-body">
+    <h2 class="h6">Progression des notes</h2>
+    {% if grades %}<canvas id="gradesChart" height="200"></canvas>
+    {% else %}<p class="text-muted">Aucune note saisie pour l'instant.</p>{% endif %}
+  </div></div></div>
+
+  <div class="col-md-6"><div class="card shadow-sm"><div class="card-body">
+    <h2 class="h6">Moral &amp; charge (bilans hebdo)</h2>
+    {% if morale %}<canvas id="moraleChart" height="200"></canvas>
+    {% else %}<p class="text-muted">Aucun bilan hebdomadaire pour l'instant.</p>{% endif %}
+  </div></div></div>
+
+  <div class="col-md-4"><div class="card shadow-sm"><div class="card-body text-center">
+    <h2 class="h6">Cours relus</h2>
+    <canvas id="coursesChart" height="160"></canvas>
+  </div></div></div>
+  <div class="col-md-4"><div class="card shadow-sm"><div class="card-body text-center">
+    <h2 class="h6">TD prêts</h2>
+    <canvas id="tdsChart" height="160"></canvas>
+  </div></div></div>
+  <div class="col-md-4"><div class="card shadow-sm"><div class="card-body text-center">
+    <h2 class="h6">Fiches validées</h2>
+    <canvas id="wsChart" height="160"></canvas>
+  </div></div></div>
+</div>
+
+<p class="text-muted small mt-4">
+  💡 Ces indicateurs sont là pour <strong>encourager la régularité</strong> et repérer les coups de fatigue,
+  pas pour surveiller. L'idéal est d'en parler ensemble.
+</p>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+const COL = {blue:'#1e3a8a', red:'#dc2626', gold:'#f59e0b', green:'#16a34a', grey:'#9ca3af', lightblue:'#60a5fa'};
+const weekLabel = s => { const d = new Date(s); return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}); };
+
+// Connexions par semaine
+new Chart(document.getElementById('loginsChart'), {
+  type: 'bar',
+  data: {
+    labels: {{ logins_per_week.keys()|list|tojson }}.map(weekLabel),
+    datasets: [{label:'Connexions', data: {{ logins_per_week.values()|list|tojson }}, backgroundColor: COL.lightblue}]
+  },
+  options: {plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{precision:0}}}}
+});
+
+// Tâches par statut (donut)
+const tbs = {{ tasks_by_status|tojson }};
+new Chart(document.getElementById('tasksChart'), {
+  type: 'doughnut',
+  data: {
+    labels: Object.keys(tbs),
+    datasets: [{data: Object.values(tbs),
+      backgroundColor: [COL.grey, COL.gold, COL.red, COL.green, COL.lightblue, '#cbd5e1']}]
+  }
+});
+
+// Tâches terminées par semaine
+new Chart(document.getElementById('doneChart'), {
+  type: 'bar',
+  data: {
+    labels: {{ done_per_week.keys()|list|tojson }}.map(weekLabel),
+    datasets: [{label:'Terminées', data: {{ done_per_week.values()|list|tojson }}, backgroundColor: COL.green}]
+  },
+  options: {plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{precision:0}}}}
+});
+
+{% if grades %}
+const grades = {{ grades|tojson }};
+new Chart(document.getElementById('gradesChart'), {
+  type: 'line',
+  data: {
+    labels: grades.map(g => new Date(g.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})),
+    datasets: [{label:'Note /20', data: grades.map(g => g.grade), borderColor: COL.blue,
+      backgroundColor: COL.blue, tension: .2}]
+  },
+  options: {scales:{y:{min:0, max:20}}}
+});
+{% endif %}
+
+{% if morale %}
+const morale = {{ morale|tojson }};
+const mlabels = morale.map(m => new Date(m.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}));
+new Chart(document.getElementById('moraleChart'), {
+  type: 'line',
+  data: {
+    labels: mlabels,
+    datasets: [
+      {label:'Confiance', data: morale.map(m=>m.confidence), borderColor: COL.green, tension:.2},
+      {label:'Charge', data: morale.map(m=>m.load), borderColor: COL.gold, tension:.2},
+      {label:'Fatigue', data: morale.map(m=>m.fatigue), borderColor: COL.red, tension:.2}
+    ]
+  },
+  options: {scales:{y:{min:0, max:5}}}
+});
+{% endif %}
+
+function ratio(id, ok, total, color) {
+  new Chart(document.getElementById(id), {
+    type: 'doughnut',
+    data: {labels:['Fait','Reste'], datasets:[{data:[ok, Math.max(total-ok,0)], backgroundColor:[color, '#e5e7eb']}]},
+    options: {plugins:{legend:{display:false}, tooltip:{enabled:true}}, cutout:'65%'}
+  });
+}
+ratio('coursesChart', {{ courses_reviewed }}, {{ courses_total }}, COL.blue);
+ratio('tdsChart', {{ tds_ready }}, {{ tds_total }}, COL.gold);
+ratio('wsChart', {{ ws_validated }}, {{ ws_total }}, COL.green);
+</script>
+{% endblock %}

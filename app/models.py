@@ -50,6 +50,11 @@ EVAL_TYPES = [
 ]
 EVAL_STATUSES = ["À préparer", "En révision", "Passée", "Corrigée", "Exploitée"]
 
+DOC_TYPES = [
+    "Cours", "Fiche", "TD", "Correction", "Annale",
+    "Méthodologie", "Administratif", "Autre",
+]
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -356,3 +361,51 @@ class WeeklyReview(db.Model):
     fatigue = db.Column(db.Integer)         # 1 à 5
     next_priorities = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+# ---------------------------------------------------------------------------
+# Suivi de l'activité (connexions) — nouvelle table, n'altère rien d'existant
+# ---------------------------------------------------------------------------
+class LoginEvent(db.Model):
+    __tablename__ = "login_events"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    user = db.relationship("User")
+
+
+# ---------------------------------------------------------------------------
+# Documents et liens
+# ---------------------------------------------------------------------------
+class Document(db.Model):
+    __tablename__ = "documents"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    doc_type = db.Column(db.String(30), default="Autre")
+    subject_id = db.Column(db.Integer, db.ForeignKey("subjects.id"))
+    # Un document est soit un fichier (filename/original_name), soit un lien (url).
+    url = db.Column(db.String(500))
+    filename = db.Column(db.String(255))       # nom stocké sur le disque
+    original_name = db.Column(db.String(255))  # nom d'origine, pour le téléchargement
+    size_bytes = db.Column(db.Integer)
+    tags = db.Column(db.String(255))
+    uploaded_by = db.Column(db.Integer, db.ForeignKey("users.id"))
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    subject = db.relationship("Subject")
+    uploader = db.relationship("User")
+
+    @property
+    def is_link(self):
+        return bool(self.url)
+
+    @property
+    def is_file(self):
+        return bool(self.filename)
+
+    @property
+    def size_kb(self):
+        return round((self.size_bytes or 0) / 1024, 1)

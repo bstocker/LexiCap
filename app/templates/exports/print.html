@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Bilan LexiCap — {{ today.strftime('%d/%m/%Y') }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #1f2937; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { color: #1e3a8a; } h2 { color: #1e3a8a; border-bottom: 1px solid #e5e7eb; padding-bottom: .25rem; margin-top: 1.5rem; }
+    .grid { display: flex; flex-wrap: wrap; gap: 1rem; }
+    .stat { border: 1px solid #e5e7eb; border-radius: 8px; padding: .75rem 1rem; min-width: 140px; }
+    .stat .n { font-size: 1.6rem; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
+    th, td { border: 1px solid #e5e7eb; padding: .4rem .6rem; text-align: left; font-size: .9rem; }
+    .muted { color: #6b7280; } .noprint { margin-bottom: 1rem; }
+    @media print { .noprint { display: none; } body { margin: 0; } }
+  </style>
+</head>
+<body>
+  <div class="noprint">
+    <button onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button>
+  </div>
+  <h1>LexiCap — Bilan du {{ today.strftime('%d/%m/%Y') }}</h1>
+
+  <h2>Vue d'ensemble</h2>
+  <div class="grid">
+    <div class="stat"><div class="n">{{ tasks_done }}/{{ tasks_total }}</div><div class="muted">tâches terminées</div></div>
+    <div class="stat"><div class="n">{{ tasks_overdue }}</div><div class="muted">tâches en retard</div></div>
+    <div class="stat"><div class="n">{{ courses_reviewed }}/{{ courses_total }}</div><div class="muted">cours relus</div></div>
+    <div class="stat"><div class="n">{{ ws_validated }}/{{ ws_total }}</div><div class="muted">fiches validées</div></div>
+    <div class="stat"><div class="n">{{ td_total }}</div><div class="muted">TD</div></div>
+    <div class="stat"><div class="n">{{ documents }}</div><div class="muted">documents</div></div>
+  </div>
+
+  <h2>Évaluations</h2>
+  {% if evaluations %}
+  <table>
+    <thead><tr><th>Date</th><th>Type</th><th>Matière</th><th>Note</th></tr></thead>
+    <tbody>
+      {% for e in evaluations %}
+      <tr>
+        <td>{{ e.evaluation_date.strftime('%d/%m/%Y') }}</td>
+        <td>{{ e.evaluation_type }}</td>
+        <td>{{ e.subject.name if e.subject else '—' }}</td>
+        <td>{{ (e.grade ~ '/20') if e.grade is not none else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">Aucune évaluation enregistrée.</p>{% endif %}
+
+  <h2>Dernier bilan hebdomadaire</h2>
+  {% if last_review %}
+    <p><strong>Semaine du {{ last_review.week_date.strftime('%d/%m/%Y') }}</strong> —
+       confiance {{ last_review.confidence or '—' }}/5,
+       charge {{ last_review.perceived_load or '—' }}/5,
+       fatigue {{ last_review.fatigue or '—' }}/5.</p>
+    {% if last_review.blockers %}<p><em>Blocages :</em> {{ last_review.blockers }}</p>{% endif %}
+    {% if last_review.next_priorities %}<p><em>Priorités à venir :</em> {{ last_review.next_priorities }}</p>{% endif %}
+  {% else %}<p class="muted">Aucun bilan hebdomadaire enregistré.</p>{% endif %}
+</body>
+</html>

@@ -4,13 +4,20 @@ Flask-WTF fournit automatiquement la protection CSRF sur tous ces formulaires.
 Les listes de choix proviennent des constantes définies dans models.py.
 """
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed, FileField
 from wtforms import (
     BooleanField, DateField, FloatField, IntegerField, PasswordField,
     SelectField, StringField, SubmitField, TextAreaField,
 )
 from wtforms.validators import (
-    DataRequired, Email, EqualTo, Length, NumberRange, Optional,
+    DataRequired, Email, EqualTo, Length, NumberRange, Optional, URL,
 )
+
+# Extensions de fichiers autorisées pour les documents.
+ALLOWED_DOC_EXTENSIONS = [
+    "pdf", "doc", "docx", "odt", "ppt", "pptx", "xls", "xlsx",
+    "txt", "md", "rtf", "png", "jpg", "jpeg", "gif", "webp",
+]
 
 from . import models as m
 
@@ -202,6 +209,35 @@ class EvaluationForm(FlaskForm):
     improvement_action = StringField("Action corrective", validators=[Optional(), Length(max=255)])
     status = SelectField("Statut", choices=_choices(m.EVAL_STATUSES))
     submit = SubmitField("Enregistrer")
+
+
+# ---------------------------------------------------------------------------
+# Documents et liens
+# ---------------------------------------------------------------------------
+class DocumentForm(FlaskForm):
+    title = StringField("Titre", validators=[DataRequired(), Length(max=200)])
+    doc_type = SelectField("Type", choices=_choices(m.DOC_TYPES))
+    subject_id = SelectField("Matière", coerce=int, validators=[Optional()])
+    file = FileField(
+        "Fichier",
+        validators=[
+            Optional(),
+            FileAllowed(ALLOWED_DOC_EXTENSIONS, "Type de fichier non autorisé."),
+        ],
+    )
+    url = StringField("…ou lien (URL)", validators=[Optional(), URL(message="URL invalide."), Length(max=500)])
+    tags = StringField("Tags (séparés par des virgules)", validators=[Optional(), Length(max=255)])
+    submit = SubmitField("Enregistrer")
+
+    def validate(self, extra_validators=None):
+        if not super().validate(extra_validators):
+            return False
+        # Il faut au moins un fichier OU une URL (sauf en modification d'un doc existant).
+        if not self.file.data and not self.url.data and not getattr(self, "_editing", False):
+            msg = "Fournissez un fichier ou une URL."
+            self.file.errors.append(msg)
+            return False
+        return True
 
 
 # ---------------------------------------------------------------------------

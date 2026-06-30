@@ -29,12 +29,18 @@ def create_app(config_class=None):
 
     # Enregistrement des blueprints.
     from .blueprints import (
-        auth, courses, dashboard, deploy, evaluations, questions,
-        reviews, setup, subjects, tasks, td, tutoring, worksheets, admin,
+        auth, calendar, courses, dashboard, deploy, documents, evaluations,
+        exports, parent, pwa, questions, reviews, setup, subjects, tasks, td,
+        tutoring, worksheets, admin,
     )
     app.register_blueprint(deploy.bp)
+    app.register_blueprint(pwa.bp)
     app.register_blueprint(setup.bp)
     app.register_blueprint(auth.bp)
+    app.register_blueprint(parent.bp)
+    app.register_blueprint(documents.bp)
+    app.register_blueprint(calendar.bp)
+    app.register_blueprint(exports.bp)
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(subjects.bp)
     app.register_blueprint(courses.bp)

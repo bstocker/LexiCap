@@ -4,7 +4,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 
 from ..extensions import db
 from ..forms import LoginForm, ProfileForm
-from ..models import User
+from ..models import LoginEvent, User
 
 bp = Blueprint("auth", __name__)
 
@@ -27,6 +27,9 @@ def login():
             flash("Ce compte est désactivé.", "warning")
         else:
             login_user(user, remember=form.remember.data)
+            # Trace la connexion (pour les statistiques d'engagement).
+            db.session.add(LoginEvent(user_id=user.id))
+            db.session.commit()
             next_page = request.args.get("next")
             # Sécurité : n'autorise que les redirections internes.
             if not next_page or not next_page.startswith("/"):

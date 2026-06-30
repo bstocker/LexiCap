@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Calendrier — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h4 mb-0 text-capitalize">{{ month_name }} {{ year }}</h1>
+  <div class="btn-group">
+    <a href="{{ url_for('calendar.month', year=prev_year, month=prev_month) }}" class="btn btn-sm btn-outline-secondary">← Précédent</a>
+    <a href="{{ url_for('calendar.month') }}" class="btn btn-sm btn-outline-secondary">Aujourd'hui</a>
+    <a href="{{ url_for('calendar.month', year=next_year, month=next_month) }}" class="btn btn-sm btn-outline-secondary">Suivant →</a>
+  </div>
+</div>
+
+<div class="mb-3">
+  <span class="badge bg-info text-dark">TD</span>
+  <span class="badge bg-success">Évaluation</span>
+  <span class="badge bg-warning text-dark">Tâche</span>
+</div>
+
+<div class="card shadow-sm"><div class="table-responsive"><table class="table table-bordered mb-0" style="table-layout:fixed">
+  <thead><tr class="text-center">
+    {% for d in day_names %}<th class="small">{{ d }}</th>{% endfor %}
+  </tr></thead>
+  <tbody>
+    {% for week in weeks %}
+    <tr style="height:96px">
+      {% for day in week %}
+        {% if day == 0 %}
+          <td class="bg-light"></td>
+        {% else %}
+          {% set is_today = (day == today.day and month == today.month and year == today.year) %}
+          <td class="align-top {{ 'border border-primary border-2' if is_today }}">
+            <div class="small fw-bold {{ 'text-primary' if is_today }}">{{ day }}</div>
+            {% for e in events.get(day, []) %}
+              <div class="small text-truncate
+                {%- if e.kind == 'td' %} text-info{% elif e.kind == 'eval' %} text-success{% else %} text-warning{% endif %}"
+                title="{{ e.label }}">• {{ e.label }}</div>
+            {% endfor %}
+          </td>
+        {% endif %}
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}
