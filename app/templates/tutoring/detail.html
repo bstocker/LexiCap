@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Séance du {{ session.session_date }} — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Séance du {{ session.session_date }}</h1>
+  <a href="{{ url_for('tutoring.edit', session_id=session.id) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+</div>
+<p class="text-muted">{{ session.duration_minutes ~ ' min' if session.duration_minutes }}{% if session.tutor %} · {{ session.tutor.full_name }}{% endif %}</p>
+<dl class="row">
+  <dt class="col-sm-3">Sujets traités</dt><dd class="col-sm-9" style="white-space:pre-line">{{ session.summary or '—' }}</dd>
+  <dt class="col-sm-3">Points compris</dt><dd class="col-sm-9" style="white-space:pre-line">{{ session.understood_points or '—' }}</dd>
+  <dt class="col-sm-3">Points fragiles</dt><dd class="col-sm-9" style="white-space:pre-line">{{ session.fragile_points or '—' }}</dd>
+  <dt class="col-sm-3">Actions à faire</dt><dd class="col-sm-9" style="white-space:pre-line">{{ session.next_actions or '—' }}</dd>
+</dl>
+{% endblock %}

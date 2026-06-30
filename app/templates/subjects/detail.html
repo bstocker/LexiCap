@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_macros.html" import subject_badge %}
+{% block title %}{{ subject.name }} — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">{{ subject_badge(subject) }}</h1>
+  <div>
+    <a href="{{ url_for('subjects.edit', subject_id=subject.id) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+    <form method="post" action="{{ url_for('subjects.archive', subject_id=subject.id) }}" class="d-inline">
+      <button class="btn btn-sm btn-outline-secondary">{{ "Réactiver" if not subject.active else "Archiver" }}</button>
+    </form>
+  </div>
+</div>
+<dl class="row">
+  <dt class="col-sm-3">Semestre</dt><dd class="col-sm-9">{{ subject.semester }}</dd>
+  <dt class="col-sm-3">Type</dt><dd class="col-sm-9">{{ subject.type or '—' }}</dd>
+  <dt class="col-sm-3">Coefficient</dt><dd class="col-sm-9">{{ subject.coefficient or '—' }}</dd>
+  <dt class="col-sm-3">Enseignant</dt><dd class="col-sm-9">{{ subject.teacher_name or '—' }}</dd>
+  <dt class="col-sm-3">Chargé de TD</dt><dd class="col-sm-9">{{ subject.td_teacher_name or '—' }}</dd>
+  <dt class="col-sm-3">Niveau ressenti</dt><dd class="col-sm-9">{{ subject.perceived_level or '—' }}</dd>
+</dl>
+
+<div class="row mt-4">
+  <div class="col-md-6 mb-4">
+    <h2 class="h6">Cours ({{ subject.courses|length }})</h2>
+    <ul class="list-group">
+      {% for c in subject.courses %}
+      <li class="list-group-item d-flex justify-content-between"><a href="{{ url_for('courses.detail', course_id=c.id) }}">{{ c.title }}</a><span class="badge badge-soft">{{ c.status }}</span></li>
+      {% else %}<li class="list-group-item text-muted">Aucun cours.</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="col-md-6 mb-4">
+    <h2 class="h6">Fiches ({{ subject.worksheets|length }})</h2>
+    <ul class="list-group">
+      {% for w in subject.worksheets %}
+      <li class="list-group-item d-flex justify-content-between"><a href="{{ url_for('worksheets.detail', worksheet_id=w.id) }}">{{ w.title }}</a><span class="badge badge-soft">{{ w.status }}</span></li>
+      {% else %}<li class="list-group-item text-muted">Aucune fiche.</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="col-md-6 mb-4">
+    <h2 class="h6">Tâches ouvertes ({{ open_tasks|length }})</h2>
+    <ul class="list-group">
+      {% for t in open_tasks %}
+      <li class="list-group-item d-flex justify-content-between"><a href="{{ url_for('tasks.edit', task_id=t.id) }}">{{ t.title }}</a><span class="priority-{{ t.priority }}">{{ t.priority }}</span></li>
+      {% else %}<li class="list-group-item text-muted">Aucune tâche ouverte.</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="col-md-6 mb-4">
+    <h2 class="h6">Évaluations ({{ subject.evaluations|length }})</h2>
+    <ul class="list-group">
+      {% for e in subject.evaluations %}
+      <li class="list-group-item d-flex justify-content-between"><a href="{{ url_for('evaluations.detail', eval_id=e.id) }}">{{ e.evaluation_type }} ({{ e.evaluation_date }})</a><span>{{ e.grade if e.grade is not none else '—' }}{% if e.grade is not none %}/20{% endif %}</span></li>
+      {% else %}<li class="list-group-item text-muted">Aucune évaluation.</li>{% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

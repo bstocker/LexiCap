@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import subject_badge %}
+{% block title %}Fiches — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h4 mb-0">Fiches de révision</h1>
+  <a href="{{ url_for('worksheets.new') }}" class="btn btn-primary btn-sm">+ Nouvelle fiche</a>
+</div>
+<div class="card shadow-sm">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Titre</th><th>Matière</th><th>Maîtrise</th><th>Statut</th><th>Prochaine révision</th><th></th></tr></thead>
+    <tbody>
+      {% for w in worksheets %}
+      <tr>
+        <td>{{ w.title }}{% if w.needs_review %} <span class="badge bg-secondary">à revoir</span>{% endif %}</td>
+        <td>{{ subject_badge(w.subject) }}</td>
+        <td>{{ w.mastery_level ~ '/5' if w.mastery_level else '—' }}</td>
+        <td><span class="badge badge-soft">{{ w.status }}</span></td>
+        <td>{{ w.next_review_date or '—' }}</td>
+        <td class="text-end"><a href="{{ url_for('worksheets.detail', worksheet_id=w.id) }}" class="btn btn-sm btn-outline-secondary">Ouvrir</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-muted text-center py-4">Aucune fiche.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

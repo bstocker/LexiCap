@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import subject_badge %}
+{% block title %}Questions tuteur — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h4 mb-0">Questions pour le tuteur</h1>
+  <a href="{{ url_for('questions.new') }}" class="btn btn-primary btn-sm">+ Nouvelle question</a>
+</div>
+<div class="card shadow-sm">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Question</th><th>Matière</th><th>Type</th><th>Priorité</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for q in questions %}
+      <tr>
+        <td>{{ q.question[:80] }}{% if q.question|length > 80 %}…{% endif %}</td>
+        <td>{{ subject_badge(q.subject) }}</td>
+        <td><small>{{ q.question_type }}</small></td>
+        <td class="priority-{{ q.priority }}">{{ q.priority }}</td>
+        <td><span class="badge badge-soft">{{ q.status }}</span></td>
+        <td class="text-end"><a href="{{ url_for('questions.detail', question_id=q.id) }}" class="btn btn-sm btn-outline-secondary">Ouvrir</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-muted text-center py-4">Aucune question.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

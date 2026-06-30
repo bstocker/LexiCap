@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import subject_badge %}
+{% block title %}{{ ws.title }} — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">{{ ws.title }}</h1>
+  <div>
+    <form method="post" action="{{ url_for('worksheets.review', worksheet_id=ws.id) }}" class="d-inline">
+      <button class="btn btn-sm btn-success">Marquer révisée</button>
+    </form>
+    <a href="{{ url_for('worksheets.edit', worksheet_id=ws.id) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+  </div>
+</div>
+<p class="text-muted">{{ subject_badge(ws.subject) }}{% if ws.chapter %} · {{ ws.chapter }}{% endif %} ·
+  <span class="badge badge-soft">{{ ws.status }}</span>{% if ws.mastery_level %} · maîtrise {{ ws.mastery_level }}/5{% endif %}</p>
+
+<div class="card">
+  <div class="card-body" style="white-space:pre-wrap">{{ ws.content_md or "Cette fiche est encore vide. Cliquez sur Modifier pour la rédiger." }}</div>
+</div>
+{% if ws.next_review_date %}<p class="text-muted mt-2 small">Prochaine révision prévue : {{ ws.next_review_date }}</p>{% endif %}
+{% endblock %}

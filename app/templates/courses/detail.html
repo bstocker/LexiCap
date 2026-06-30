@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import subject_badge %}
+{% block title %}{{ course.title }} — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">{{ course.title }}</h1>
+  <a href="{{ url_for('courses.edit', course_id=course.id) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+</div>
+<p class="text-muted">{{ subject_badge(course.subject) }} · {{ course.course_type }} · {{ course.course_date }}</p>
+
+<dl class="row">
+  <dt class="col-sm-3">Statut</dt><dd class="col-sm-9"><span class="badge badge-soft">{{ course.status }}</span></dd>
+  <dt class="col-sm-3">Relu</dt><dd class="col-sm-9">{{ "Oui, le " ~ course.review_date if course.reviewed else "Non" }}</dd>
+  <dt class="col-sm-3">Compréhension</dt><dd class="col-sm-9">{{ course.comprehension_level ~ "/5" if course.comprehension_level else "—" }}</dd>
+  <dt class="col-sm-3">Notes</dt><dd class="col-sm-9">{{ course.notes or "—" }}</dd>
+</dl>
+
+<div class="d-flex gap-2 flex-wrap">
+  {% if not course.reviewed %}
+  <form method="post" action="{{ url_for('courses.mark_reviewed', course_id=course.id) }}">
+    <button class="btn btn-sm btn-success">Marquer relu</button>
+  </form>
+  {% endif %}
+  <form method="post" action="{{ url_for('courses.create_worksheet', course_id=course.id) }}">
+    <button class="btn btn-sm btn-outline-primary">Créer une fiche</button>
+  </form>
+  <form method="post" action="{{ url_for('courses.create_question', course_id=course.id) }}">
+    <button class="btn btn-sm btn-outline-dark">Question au tuteur</button>
+  </form>
+</div>
+{% endblock %}

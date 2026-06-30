@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import subject_badge %}
+{% block title %}Matières — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h4 mb-0">Matières</h1>
+  <a href="{{ url_for('subjects.new') }}" class="btn btn-primary btn-sm">+ Nouvelle matière</a>
+</div>
+<div class="card shadow-sm">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Nom</th><th>Semestre</th><th>Coef.</th><th>Niveau ressenti</th><th></th></tr></thead>
+    <tbody>
+      {% for s in subjects %}
+      <tr{% if not s.active %} class="text-muted"{% endif %}>
+        <td>{{ subject_badge(s) }}{% if not s.active %} <span class="badge bg-secondary">archivée</span>{% endif %}</td>
+        <td>{{ s.semester }}</td>
+        <td>{{ s.coefficient or '—' }}</td>
+        <td>{{ s.perceived_level or '—' }}</td>
+        <td class="text-end"><a href="{{ url_for('subjects.detail', subject_id=s.id) }}" class="btn btn-sm btn-outline-secondary">Ouvrir</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="text-center py-4">
+        <p class="text-muted">Aucune matière pour le moment.</p>
+        <form method="post" action="{{ url_for('subjects.seed') }}" class="d-inline">
+          <button class="btn btn-outline-primary btn-sm">Ajouter les matières types de L1 Droit</button>
+        </form>
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

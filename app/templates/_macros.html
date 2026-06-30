@@ -1,0 +1,41 @@
+{# Rendu générique d'un champ WTForms avec Bootstrap. #}
+{% macro field(f, rows=None) %}
+  <div class="mb-3">
+    {{ f.label(class="form-label") }}
+    {% if f.type == 'BooleanField' %}
+      <div class="form-check">
+        {{ f(class="form-check-input") }}
+      </div>
+    {% elif f.type == 'TextAreaField' %}
+      {{ f(class="form-control" + (" is-invalid" if f.errors else ""), rows=rows or 4) }}
+    {% elif f.type == 'SelectField' %}
+      {{ f(class="form-select" + (" is-invalid" if f.errors else "")) }}
+    {% else %}
+      {{ f(class="form-control" + (" is-invalid" if f.errors else "")) }}
+    {% endif %}
+    {% for error in f.errors %}
+      <div class="invalid-feedback d-block">{{ error }}</div>
+    {% endfor %}
+  </div>
+{% endmacro %}
+
+{# Affiche un formulaire complet en itérant sur ses champs visibles. #}
+{% macro render_form(form, skip=[]) %}
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {% for f in form if f.widget.input_type != 'hidden' and f.name != 'submit' and f.name not in skip %}
+      {{ field(f) }}
+    {% endfor %}
+    {{ form.submit(class="btn btn-primary") }}
+    <a href="javascript:history.back()" class="btn btn-outline-secondary">Annuler</a>
+  </form>
+{% endmacro %}
+
+{# Petite pastille colorée + nom de matière. #}
+{% macro subject_badge(subject) %}
+  {% if subject %}
+    <span class="subject-dot" style="background-color: {{ subject.color or '#2563eb' }}"></span>{{ subject.name }}
+  {% else %}
+    <span class="text-muted">—</span>
+  {% endif %}
+{% endmacro %}

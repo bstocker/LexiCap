@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# Environnements virtuels
+venv/
+.venv/
+env/
+
+# Variables d'environnement / secrets
+.env
+
+# Instance Flask (base SQLite, uploads, fichiers générés)
+instance/
+
+# Migrations générées localement — gardées par défaut, décommenter si besoin
+# migrations/
+
+# Éditeurs / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

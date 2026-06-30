@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import subject_badge %}
+{% block title %}{{ td.theme }} — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">{{ td.theme }}</h1>
+  <a href="{{ url_for('td.edit', td_id=td.id) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+</div>
+<p class="text-muted">{{ subject_badge(td.subject) }} · {{ td.td_date }}
+  {% if td.is_urgent %}<span class="badge bg-warning text-dark">À préparer ({{ td.days_left }} j)</span>{% endif %}</p>
+
+<dl class="row">
+  <dt class="col-sm-3">Méthode</dt><dd class="col-sm-9">{{ td.method or '—' }}</dd>
+  <dt class="col-sm-3">Statut</dt><dd class="col-sm-9"><span class="badge badge-soft">{{ td.status }}</span></dd>
+  <dt class="col-sm-3">Documents à lire</dt><dd class="col-sm-9" style="white-space:pre-line">{{ td.documents or '—' }}</dd>
+  <dt class="col-sm-3">Exercice demandé</dt><dd class="col-sm-9" style="white-space:pre-line">{{ td.exercise or '—' }}</dd>
+  <dt class="col-sm-3">Correction reprise</dt><dd class="col-sm-9">{{ "Oui" if td.correction_reviewed else "Non" }}</dd>
+</dl>
+
+<form method="post" action="{{ url_for('td.create_question', td_id=td.id) }}">
+  <button class="btn btn-sm btn-outline-dark">Question au tuteur</button>
+</form>
+{% endblock %}

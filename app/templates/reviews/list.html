@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Bilans — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h4 mb-0">Bilans hebdomadaires</h1>
+  <a href="{{ url_for('reviews.new') }}" class="btn btn-primary btn-sm">+ Nouveau bilan</a>
+</div>
+<div class="card shadow-sm">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Semaine</th><th>Charge</th><th>Confiance</th><th>Fatigue</th><th></th></tr></thead>
+    <tbody>
+      {% for r in reviews %}
+      <tr>
+        <td>{{ r.week_date }}</td>
+        <td>{{ r.perceived_load ~ '/5' if r.perceived_load else '—' }}</td>
+        <td>{{ r.confidence ~ '/5' if r.confidence else '—' }}</td>
+        <td>{{ r.fatigue ~ '/5' if r.fatigue else '—' }}</td>
+        <td class="text-end"><a href="{{ url_for('reviews.detail', review_id=r.id) }}" class="btn btn-sm btn-outline-secondary">Ouvrir</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="text-muted text-center py-4">Aucun bilan.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

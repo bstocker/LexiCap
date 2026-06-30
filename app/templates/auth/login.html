@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Connexion — LexiCap{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5 col-lg-4">
+    <div class="text-center mb-4">
+      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="LexiCap" style="max-height:64px">
+    </div>
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h1 class="h5 mb-3 text-center">Connexion</h1>
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          {{ field(form.email) }}
+          {{ field(form.password) }}
+          <div class="form-check mb-3">
+            {{ form.remember(class="form-check-input") }}
+            {{ form.remember.label(class="form-check-label") }}
+          </div>
+          {{ form.submit(class="btn btn-primary w-100") }}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

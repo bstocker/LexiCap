@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% from "_macros.html" import subject_badge %}
+{% block title %}Tableau de bord — LexiCap{% endblock %}
+
+{% macro section(title, items, color) %}
+<div class="col-md-6 col-xl-4 mb-4">
+  <div class="card dashboard-card shadow-sm">
+    <div class="card-header bg-{{ color }} text-white d-flex justify-content-between">
+      <span>{{ title }}</span><span class="badge bg-light text-dark">{{ items|length }}</span>
+    </div>
+    <div class="card-body">
+      {% if items %}
+        {{ caller() }}
+      {% else %}
+        <p class="text-muted mb-0">Rien à signaler. 👍</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h4 mb-0">Ma semaine</h1>
+  <a href="{{ url_for('reviews.new') }}" class="btn btn-sm btn-outline-primary">+ Bilan hebdomadaire</a>
+</div>
+
+<div class="row">
+  {% call section("Tâches en retard", overdue_tasks, "danger") %}
+    <ul class="list-unstyled mb-0">
+      {% for t in overdue_tasks %}
+      <li class="mb-2">
+        <a href="{{ url_for('tasks.edit', task_id=t.id) }}">{{ t.title }}</a>
+        <small class="text-danger d-block">Échéance : {{ t.due_date }}</small>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endcall %}
+
+  {% call section("Tâches urgentes (48h)", urgent_tasks, "warning") %}
+    <ul class="list-unstyled mb-0">
+      {% for t in urgent_tasks %}
+      <li class="mb-2">
+        <a href="{{ url_for('tasks.edit', task_id=t.id) }}">{{ t.title }}</a>
+        <small class="text-muted d-block">{{ t.due_date }} · <span class="priority-{{ t.priority }}">{{ t.priority }}</span></small>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endcall %}
+
+  {% call section("Cours à relire", courses_to_review, "primary") %}
+    <ul class="list-unstyled mb-0">
+      {% for c in courses_to_review %}
+      <li class="mb-2">
+        <a href="{{ url_for('courses.detail', course_id=c.id) }}">{{ c.title }}</a>
+        <small class="text-muted d-block">{{ subject_badge(c.subject) }} · {{ c.course_date }}</small>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endcall %}
+
+  {% call section("TD à préparer", upcoming_td, "info") %}
+    <ul class="list-unstyled mb-0">
+      {% for td in upcoming_td %}
+      <li class="mb-2">
+        <a href="{{ url_for('td.detail', td_id=td.id) }}">{{ td.theme }}</a>
+        <small class="text-muted d-block">{{ subject_badge(td.subject) }} · dans {{ td.days_left }} j ({{ td.status }})</small>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endcall %}
+
+  {% call section("Fiches à revoir", worksheets_to_review, "secondary") %}
+    <ul class="list-unstyled mb-0">
+      {% for w in worksheets_to_review %}
+      <li class="mb-2">
+        <a href="{{ url_for('worksheets.detail', worksheet_id=w.id) }}">{{ w.title }}</a>
+        <small class="text-muted d-block">{{ subject_badge(w.subject) }}{% if w.mastery_level %} · maîtrise {{ w.mastery_level }}/5{% endif %}</small>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endcall %}
+
+  {% call section("Questions tuteur ouvertes", open_questions, "dark") %}
+    <ul class="list-unstyled mb-0">
+      {% for q in open_questions %}
+      <li class="mb-2">
+        <a href="{{ url_for('questions.detail', question_id=q.id) }}">{{ q.question[:70] }}{% if q.question|length > 70 %}…{% endif %}</a>
+        <small class="text-muted d-block"><span class="priority-{{ q.priority }}">{{ q.priority }}</span> · {{ q.status }}</small>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endcall %}
+
+  {% call section("Prochaines évaluations", upcoming_evals, "success") %}
+    <ul class="list-unstyled mb-0">
+      {% for e in upcoming_evals %}
+      <li class="mb-2">
+        <a href="{{ url_for('evaluations.detail', eval_id=e.id) }}">{{ e.evaluation_type }} — {{ subject_badge(e.subject) }}</a>
+        <small class="text-muted d-block">{{ e.evaluation_date }} · dans {{ e.days_left }} j</small>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endcall %}
+</div>
+{% endblock %}

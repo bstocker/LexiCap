@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import render_form %}
+{% block title %}{{ title }} — LexiCap{% endblock %}
+{% block content %}
+<h1 class="h4 mb-4">{{ title }}</h1>
+<div class="row">
+  <div class="col-lg-8">{{ render_form(form) }}</div>
+  <div class="col-lg-4">
+    <div class="card bg-light">
+      <div class="card-body small">
+        <strong>Trame conseillée</strong>
+        <ul class="ps-3 mb-0">
+          <li>Définition principale</li>
+          <li>Idées essentielles</li>
+          <li>Règles importantes</li>
+          <li>Articles / décisions</li>
+          <li>Exemple concret</li>
+          <li>Pièges à éviter</li>
+          <li>Question possible à l'examen</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

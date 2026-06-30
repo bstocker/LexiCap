@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Séances de tutorat — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h4 mb-0">Séances de tutorat</h1>
+  <a href="{{ url_for('tutoring.new') }}" class="btn btn-primary btn-sm">+ Nouvelle séance</a>
+</div>
+<div class="card shadow-sm">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Date</th><th>Durée</th><th>Sujets traités</th><th></th></tr></thead>
+    <tbody>
+      {% for s in sessions %}
+      <tr>
+        <td>{{ s.session_date }}</td>
+        <td>{{ s.duration_minutes ~ ' min' if s.duration_minutes else '—' }}</td>
+        <td>{{ (s.summary or '')[:80] }}</td>
+        <td class="text-end"><a href="{{ url_for('tutoring.detail', session_id=s.id) }}" class="btn btn-sm btn-outline-secondary">Ouvrir</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="text-muted text-center py-4">Aucune séance enregistrée.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

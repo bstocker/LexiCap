@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_macros.html" import subject_badge %}
+{% block title %}Tâches — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h4 mb-0">Tâches</h1>
+  <a href="{{ url_for('tasks.new') }}" class="btn btn-primary btn-sm">+ Nouvelle tâche</a>
+</div>
+
+<div class="mb-3">
+  <a href="{{ url_for('tasks.index') }}" class="btn btn-sm {{ 'btn-secondary' if not current_status else 'btn-outline-secondary' }}">Toutes</a>
+  {% for s in ['À faire', 'En cours', 'Bloquée', 'Terminée'] %}
+  <a href="{{ url_for('tasks.index', status=s) }}" class="btn btn-sm {{ 'btn-secondary' if current_status == s else 'btn-outline-secondary' }}">{{ s }}</a>
+  {% endfor %}
+</div>
+
+<div class="card shadow-sm">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Titre</th><th>Matière</th><th>Type</th><th>Priorité</th><th>Échéance</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for t in tasks %}
+      <tr>
+        <td>{{ t.title }}</td>
+        <td>{{ subject_badge(t.subject) }}</td>
+        <td><small>{{ t.task_type }}</small></td>
+        <td class="priority-{{ t.priority }}">{{ t.priority }}</td>
+        <td>{% if t.due_date %}<span class="{{ 'text-danger fw-bold' if t.is_overdue }}">{{ t.due_date }}</span>{% else %}—{% endif %}</td>
+        <td><span class="badge badge-soft">{{ t.status }}</span></td>
+        <td class="text-end">
+          {% if not t.is_done %}
+          <form method="post" action="{{ url_for('tasks.complete', task_id=t.id) }}" class="d-inline">
+            <button class="btn btn-sm btn-outline-success" title="Terminer">✓</button>
+          </form>
+          {% endif %}
+          <a href="{{ url_for('tasks.edit', task_id=t.id) }}" class="btn btn-sm btn-outline-secondary">Modifier</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="text-muted text-center py-4">Aucune tâche.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

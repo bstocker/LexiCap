@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Bilan du {{ review.week_date }} — LexiCap{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Bilan — semaine du {{ review.week_date }}</h1>
+  <a href="{{ url_for('reviews.edit', review_id=review.id) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+</div>
+<div class="row mb-3">
+  <div class="col"><span class="badge bg-info text-dark">Charge {{ review.perceived_load or '—' }}/5</span></div>
+  <div class="col"><span class="badge bg-success">Confiance {{ review.confidence or '—' }}/5</span></div>
+  <div class="col"><span class="badge bg-warning text-dark">Fatigue {{ review.fatigue or '—' }}/5</span></div>
+</div>
+<dl class="row">
+  <dt class="col-sm-3">Ce qui a été fait</dt><dd class="col-sm-9" style="white-space:pre-line">{{ review.done or '—' }}</dd>
+  <dt class="col-sm-3">Ce qui n'a pas été fait</dt><dd class="col-sm-9" style="white-space:pre-line">{{ review.not_done or '—' }}</dd>
+  <dt class="col-sm-3">Points de blocage</dt><dd class="col-sm-9" style="white-space:pre-line">{{ review.blockers or '—' }}</dd>
+  <dt class="col-sm-3">Priorités semaine prochaine</dt><dd class="col-sm-9" style="white-space:pre-line">{{ review.next_priorities or '—' }}</dd>
+</dl>
+{% endblock %}
