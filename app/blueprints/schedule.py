@@ -4,10 +4,13 @@ from datetime import date, timedelta
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import login_required
 
+from flask_login import current_user
+
 from ..extensions import db
 from ..forms import ScheduleSlotForm
 from ..models import (
-    Evaluation, ScheduleSlot, Subject, Task, TdSession, WEEKDAYS,
+    Course, Evaluation, ScheduleSlot, Subject, Task, TdSession, WEEKDAYS,
+    get_setting, set_setting,
 )
 
 bp = Blueprint("schedule", __name__, url_prefix="/schedule")
@@ -16,7 +19,17 @@ bp = Blueprint("schedule", __name__, url_prefix="/schedule")
 DAY_START_H = 8
 DAY_END_H = 20
 PX_PER_MIN = 0.8
-N_DAYS = 6  # Lundi → Samedi
+
+
+def _show_saturday():
+    return get_setting("show_saturday", "1") != "0"
+
+
+def _parse_date(value, fallback=None):
+    try:
+        return date.fromisoformat(value) if value else fallback
+    except (TypeError, ValueError):
+        return fallback
 
 
 def _subject_choices():
@@ -29,21 +42,19 @@ def _subject_choices():
 @login_required
 def week():
     today = date.today()
-    ref = request.args.get("date")
-    try:
-        ref = date.fromisoformat(ref) if ref else today
-    except ValueError:
-        ref = today
+    ref = _parse_date(request.args.get("date"), today)
     monday = ref - timedelta(days=ref.weekday())
-    days = [monday + timedelta(days=i) for i in range(N_DAYS)]
+    n_days = 6 if _show_saturday() else 5
+    days = [monday + timedelta(days=i) for i in range(n_days)]
 
     slots = ScheduleSlot.query.all()
-    slots_by_day = {i: [] for i in range(N_DAYS)}
+    slots_by_day = {i: [] for i in range(n_days)}
     day_start_min = DAY_START_H * 60
     for s in slots:
         if s.day_of_week not in slots_by_day:
             continue
         slots_by_day[s.day_of_week].append({
+            "id": s.id,
             "top": (s.start_minutes - day_start_min) * PX_PER_MIN,
             "height": max((s.end_minutes - s.start_minutes) * PX_PER_MIN, 18),
             "label": (s.subject.name if s.subject else s.slot_type),
@@ -54,7 +65,7 @@ def week():
         })
 
     # Événements datés tombant dans la semaine (TD, évaluations, tâches à échéance).
-    end = monday + timedelta(days=N_DAYS - 1)
+    end = monday + timedelta(days=n_days - 1)
     events_by_date = {d: [] for d in days}
 
     def add(d, label, kind):
@@ -90,8 +101,69 @@ def week():
         px_per_min=PX_PER_MIN, grid_height=grid_height,
         prev_date=(monday - timedelta(days=7)).isoformat(),
         next_date=(monday + timedelta(days=7)).isoformat(),
-        monday=monday, today=today,
+        monday=monday, today=today, show_saturday=_show_saturday(),
     )
+
+
+@bp.route("/toggle-saturday", methods=["POST"])
+@login_required
+def toggle_saturday():
+    set_setting("show_saturday", "0" if _show_saturday() else "1")
+    return redirect(request.referrer or url_for("schedule.week"))
+
+
+@bp.route("/slot/<int:slot_id>/actions")
+@login_required
+def slot_actions(slot_id):
+    """Petite page d'actions pour un créneau à une date donnée."""
+    slot = db.get_or_404(ScheduleSlot, slot_id)
+    day = _parse_date(request.args.get("date"), date.today())
+    fr_days = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+    day_label = f"{fr_days[day.weekday()]} {day.strftime('%d/%m/%Y')}"
+    return render_template("schedule/slot_actions.html", slot=slot, day=day, day_label=day_label)
+
+
+@bp.route("/slot/<int:slot_id>/create-course", methods=["POST"])
+@login_required
+def create_course(slot_id):
+    slot = db.get_or_404(ScheduleSlot, slot_id)
+    day = _parse_date(request.form.get("date"), date.today())
+    if not slot.subject_id:
+        flash("Ce créneau n'a pas de matière : impossible de créer une séance de cours.", "warning")
+        return redirect(url_for("schedule.slot_actions", slot_id=slot.id, date=day.isoformat()))
+    course_type = slot.slot_type if slot.slot_type in ("CM", "TD") else "CM"
+    course = Course(
+        subject_id=slot.subject_id,
+        title=slot.subject.name,
+        course_date=day,
+        course_type=course_type,
+    )
+    db.session.add(course)
+    db.session.commit()
+    flash("Séance de cours créée — complétez-la si besoin.", "success")
+    return redirect(url_for("courses.edit", course_id=course.id))
+
+
+@bp.route("/slot/<int:slot_id>/create-task", methods=["POST"])
+@login_required
+def create_task(slot_id):
+    slot = db.get_or_404(ScheduleSlot, slot_id)
+    day = _parse_date(request.form.get("date"), date.today())
+    label = slot.subject.name if slot.subject else slot.slot_type
+    type_map = {"TD": "TD", "Révision": "Révision"}
+    task = Task(
+        title=f"Préparer {label} ({day.strftime('%d/%m')})",
+        subject_id=slot.subject_id,
+        task_type=type_map.get(slot.slot_type, "Relecture"),
+        priority="Moyenne",
+        due_date=day,
+        created_by=current_user.id,
+        assigned_to=current_user.id,
+    )
+    db.session.add(task)
+    db.session.commit()
+    flash("Tâche créée — précisez-la si besoin.", "success")
+    return redirect(url_for("tasks.edit", task_id=task.id))
 
 
 @bp.route("/manage")

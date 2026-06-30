@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import subject_badge %}
+{% block title %}Créneau — LexiCap{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <a href="{{ url_for('schedule.week', date=day.isoformat()) }}" class="btn btn-sm btn-outline-secondary mb-3">← Retour à la semaine</a>
+
+    <div class="card shadow-sm">
+      <div class="card-header" style="border-left:4px solid {{ slot.color }}">
+        <strong>{{ slot.subject.name if slot.subject else slot.slot_type }}</strong>
+        <span class="badge ms-2" style="background:{{ slot.color }}">{{ slot.slot_type }}</span>
+      </div>
+      <div class="card-body">
+        <p class="mb-1 text-capitalize">📅 {{ day_label }}</p>
+        <p class="mb-1">🕒 {{ slot.start_time.strftime('%H:%M') }}–{{ slot.end_time.strftime('%H:%M') }}</p>
+        {% if slot.subject %}<p class="mb-1">📚 {{ subject_badge(slot.subject) }}</p>{% endif %}
+        {% if slot.room %}<p class="mb-1">📍 {{ slot.room }}</p>{% endif %}
+        {% if slot.note %}<p class="text-muted mb-0">{{ slot.note }}</p>{% endif %}
+
+        <hr>
+        <p class="small text-muted">Créer un élément de suivi pour cette date :</p>
+        <div class="d-flex gap-2 flex-wrap">
+          {% if slot.subject %}
+          <form method="post" action="{{ url_for('schedule.create_course', slot_id=slot.id) }}">
+            <input type="hidden" name="date" value="{{ day.isoformat() }}">
+            <button class="btn btn-outline-primary">📖 Créer la séance de cours</button>
+          </form>
+          {% else %}
+          <span class="text-muted small align-self-center">Ajoutez une matière au créneau pour pouvoir créer un cours.</span>
+          {% endif %}
+          <form method="post" action="{{ url_for('schedule.create_task', slot_id=slot.id) }}">
+            <input type="hidden" name="date" value="{{ day.isoformat() }}">
+            <button class="btn btn-outline-success">✅ Créer une tâche</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

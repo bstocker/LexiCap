@@ -8,7 +8,12 @@
     <a href="{{ url_for('schedule.week') }}" class="btn btn-sm btn-outline-secondary">Cette semaine</a>
     <a href="{{ url_for('schedule.week', date=next_date) }}" class="btn btn-sm btn-outline-secondary">Sem. suiv. →</a>
   </div>
-  <a href="{{ url_for('schedule.manage') }}" class="btn btn-sm btn-primary">Gérer les créneaux</a>
+  <div class="d-flex gap-2">
+    <form method="post" action="{{ url_for('schedule.toggle_saturday') }}">
+      <button class="btn btn-sm btn-outline-secondary">{{ 'Masquer le samedi' if show_saturday else 'Afficher le samedi' }}</button>
+    </form>
+    <a href="{{ url_for('schedule.manage') }}" class="btn btn-sm btn-primary">Gérer les créneaux</a>
+  </div>
 </div>
 
 <div class="mb-2">
@@ -47,12 +52,14 @@
       <div style="position:relative; height:{{ grid_height }}px;
                   background:repeating-linear-gradient(#ffffff, #ffffff {{ (60*px_per_min)-1 }}px, #eef0f4 {{ (60*px_per_min)-1 }}px, #eef0f4 {{ 60*px_per_min }}px)">
         {% for s in day.slots %}
-        <div style="position:absolute; top:{{ s.top }}px; height:{{ s.height }}px; left:2px; right:2px;
-                    background:{{ s.color }}1a; border-left:3px solid {{ s.color }}; border-radius:4px;
-                    padding:2px 4px; overflow:hidden" title="{{ s.label }} ({{ s.sub }})">
+        <a href="{{ url_for('schedule.slot_actions', slot_id=s.id, date=day.date.isoformat()) }}"
+           class="text-decoration-none"
+           style="position:absolute; top:{{ s.top }}px; height:{{ s.height }}px; left:2px; right:2px;
+                  display:block; background:{{ s.color }}1a; border-left:3px solid {{ s.color }}; border-radius:4px;
+                  padding:2px 4px; overflow:hidden" title="{{ s.label }} ({{ s.sub }}) — cliquer pour créer un cours/une tâche">
           <div class="small fw-semibold text-truncate" style="color:{{ s.color }}">{{ s.label }}</div>
           <div class="text-truncate" style="font-size:.7rem; color:#6b7280">{{ s.sub }}</div>
-        </div>
+        </a>
         {% endfor %}
       </div>
     </div>

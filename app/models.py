@@ -456,3 +456,27 @@ class ScheduleSlot(db.Model):
         if 0 <= self.day_of_week < len(WEEKDAYS):
             return WEEKDAYS[self.day_of_week]
         return "?"
+
+
+# ---------------------------------------------------------------------------
+# Préférences applicatives (table clé/valeur réutilisable)
+# ---------------------------------------------------------------------------
+class Setting(db.Model):
+    __tablename__ = "settings"
+
+    key = db.Column(db.String(60), primary_key=True)
+    value = db.Column(db.String(255))
+
+
+def get_setting(key, default=None):
+    s = db.session.get(Setting, key)
+    return s.value if s is not None else default
+
+
+def set_setting(key, value):
+    s = db.session.get(Setting, key)
+    if s is None:
+        db.session.add(Setting(key=key, value=str(value)))
+    else:
+        s.value = str(value)
+    db.session.commit()
