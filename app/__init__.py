@@ -29,9 +29,10 @@ def create_app(config_class=None):
 
     # Enregistrement des blueprints.
     from .blueprints import (
-        auth, courses, dashboard, evaluations, questions,
+        auth, courses, dashboard, deploy, evaluations, questions,
         reviews, setup, subjects, tasks, td, tutoring, worksheets, admin,
     )
+    app.register_blueprint(deploy.bp)
     app.register_blueprint(setup.bp)
     app.register_blueprint(auth.bp)
     app.register_blueprint(dashboard.bp)

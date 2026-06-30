@@ -24,6 +24,9 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", _default_sqlite)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # Jeton du webhook de déploiement (/deploy). Si absent, la route est désactivée.
+    DEPLOY_TOKEN = os.environ.get("DEPLOY_TOKEN")
+
     # Uploads (préparé pour une future gestion documentaire).
     UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", str(BASE_DIR / "instance" / "uploads"))
     MAX_CONTENT_LENGTH = int(os.environ.get("MAX_CONTENT_LENGTH", 10 * 1024 * 1024))

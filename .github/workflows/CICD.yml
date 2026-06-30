@@ -1,83 +1,44 @@
-name: Deploy to PythonAnywhere (recursive upload)
+name: Déployer LexiCap sur PythonAnywhere
 
-# ⚠️ DÉPRÉCIÉ — Ne plus utiliser pour un déploiement réel.
-# L'upload via l'API Files de PythonAnywhere s'est révélé non fiable (fichiers
-# déposés vides, corruption des fichiers binaires comme le logo/favicon).
-# Le déploiement se fait désormais par git : voir deploy.sh et le README.
-# Ce workflow est conservé en déclenchement MANUEL uniquement (workflow_dispatch)
-# pour ne pas re-casser le site à chaque push.
+# Déclenché à chaque push sur main, et manuellement via le bouton "Run workflow".
+#
+# Étapes :
+#   1. appelle le webhook /deploy de l'app → elle fait un `git pull` sur PythonAnywhere ;
+#   2. recharge la web app via l'API officielle de reload.
+#
+# Secrets nécessaires (Settings > Secrets and variables > Actions) :
+#   DEPLOY_TOKEN       jeton partagé avec ~/mysite/.env sur PythonAnywhere
+#   PA_WEBAPP_DOMAIN   ex: cassy.pythonanywhere.com
+#   PA_USERNAME        votre nom d'utilisateur PythonAnywhere
+#   PA_TOKEN           token API PythonAnywhere
+#   PA_HOST            (optionnel) eu.pythonanywhere.com si compte EU
 on:
+  push:
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Validate required secrets
+      - name: Tirer le code sur PythonAnywhere (webhook /deploy)
         shell: bash
         run: |
           set -euo pipefail
-          : "${{ secrets.PA_USERNAME }}"
-          : "${{ secrets.PA_TOKEN }}"
-          : "${{ secrets.PA_TARGET_DIR }}"
-          : "${{ secrets.PA_WEBAPP_DOMAIN }}"
+          curl -sS --fail --retry 3 --retry-delay 3 -X POST \
+            -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" \
+            "https://${{ secrets.PA_WEBAPP_DOMAIN }}/deploy"
+          echo ""
+          echo "git pull déclenché."
 
-      - name: Upload all files recursively (dirs auto-created by Files API)
+      - name: Recharger la web app
         shell: bash
         run: |
           set -euo pipefail
-          USER="${{ secrets.PA_USERNAME }}"
-          TOKEN="${{ secrets.PA_TOKEN }}"
-          TARGET_DIR="${{ secrets.PA_TARGET_DIR }}"
-          DOMAIN="${{ secrets.PA_WEBAPP_DOMAIN }}"
-
-          # Optional: set PA_HOST secret to "eu.pythonanywhere.com" if your account is on EU.
           HOST="${{ secrets.PA_HOST }}"
           if [[ -z "${HOST}" ]]; then HOST="www.pythonanywhere.com"; fi
-
-          echo "Using PythonAnywhere host: ${HOST}"
-          echo "Target directory: ${TARGET_DIR}"
-
-          # Upload every file; remote directories are created automatically by the Files API.
-          while IFS= read -r -d '' file; do
-            rel="${file#./}"
-
-            # Exclusions (adjust to taste)
-            case "$rel" in
-              .git/*|.github/*|.venv/*|__pycache__/*|node_modules/*) continue ;;
-              *.pyc|.DS_Store) continue ;;
-            esac
-
-            remote_path="${TARGET_DIR}/${rel}"
-            echo " - ${rel} -> ${remote_path}"
-
-            # --retry gère le rate-limiting de l'API PythonAnywhere (HTTP 429),
-            # que curl reconnaît comme une erreur transitoire et retente avec
-            # un backoff. La petite pause espace les requêtes pour limiter les 429.
-            curl -sS --fail --retry 6 --retry-delay 3 --retry-all-errors -X POST \
-              -H "Authorization: Token ${TOKEN}" \
-              -F "content=@${file}" \
-              "https://${HOST}/api/v0/user/${USER}/files/path${remote_path}" \
-              >/dev/null
-            sleep 0.5
-
-          done < <(
-            find . \
-              -type d \( -name .git -o -name .github -o -name .venv -o -name __pycache__ -o -name node_modules \) -prune -false \
-              -o -type f \
-                ! -name ".DS_Store" \
-                ! -name "*.pyc" \
-                -print0
-          )
-
-          echo "Reloading webapp ${DOMAIN}..."
-          curl -sS --fail --retry 6 --retry-delay 3 --retry-all-errors -X POST \
-            -H "Authorization: Token ${TOKEN}" \
-            "https://${HOST}/api/v0/user/${USER}/webapps/${DOMAIN}/reload/" \
+          curl -sS --fail --retry 3 --retry-delay 3 -X POST \
+            -H "Authorization: Token ${{ secrets.PA_TOKEN }}" \
+            "https://${HOST}/api/v0/user/${{ secrets.PA_USERNAME }}/webapps/${{ secrets.PA_WEBAPP_DOMAIN }}/reload/" \
             >/dev/null
-
-          echo "Deployed. Try: https://${DOMAIN}/"
+          echo "Web app rechargée : https://${{ secrets.PA_WEBAPP_DOMAIN }}/"

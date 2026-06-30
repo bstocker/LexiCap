@@ -101,8 +101,29 @@ Aucune commande `flask init-db` n'est nécessaire : les tables et la clé secrè
 sont créées automatiquement au premier chargement, et le premier compte
 administrateur se crée via l'assistant web (`/setup`).
 
-**Mises à jour suivantes** : après un `git push` sur ce dépôt, lancer côté
-PythonAnywhere :
+### Mises à jour automatiques via GitHub Actions (recommandé)
+
+Une fois l'app en place, on peut déployer automatiquement à chaque `git push`
+(ou via le bouton **Run workflow** de l'onglet Actions). Le workflow appelle le
+webhook `/deploy` de l'app (qui fait un `git pull` côté PythonAnywhere) puis
+recharge la web app.
+
+Configuration unique :
+
+1. Générer un jeton : `python -c "import secrets; print(secrets.token_hex(32))"`.
+2. Sur PythonAnywhere, l'ajouter dans `~/mysite/.env` : `DEPLOY_TOKEN=<le-jeton>`
+   (créer le fichier `.env` s'il n'existe pas), puis **Reload** la web app.
+3. Dans GitHub : *Settings > Secrets and variables > Actions*, ajouter le secret
+   `DEPLOY_TOKEN` (même valeur), et vérifier que `PA_WEBAPP_DOMAIN`, `PA_USERNAME`,
+   `PA_TOKEN` sont présents.
+
+Sur un compte PythonAnywhere **gratuit**, si le `git pull` du webhook échoue avec
+une erreur réseau, ajouter dans `~/mysite/.env` :
+`HTTPS_PROXY=http://proxy.server:3128`.
+
+### Mise à jour manuelle (alternative)
+
+Depuis une console Bash PythonAnywhere :
 
 ```bash
 bash ~/mysite/deploy.sh
